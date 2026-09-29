@@ -1,0 +1,16 @@
+services:
+  backend:
+    build: ./backend
+    container_name: grid-backend
+    ports:
+      - "8001:8001"
+    restart: always
+
+  frontend:
+    build: ./frontend
+    container_name: grid-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    restart: always
