@@ -5,6 +5,7 @@ import asyncio
 import httpx
 import random
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 # Local data cache with realistic baseline values
 energy_data = {
@@ -22,7 +23,7 @@ async def fetch_energy_data():
     """Background task to update grid data with fallback simulation"""
     while True:
         try:
-            today = datetime.now().strftime('%Y-%m-%d')
+            today = datetime.now(ZoneInfo("Europe/Stockholm")).strftime('%Y-%m-%d')
             api_url = f"https://www.svk.se/services/kontrollrummet/api/v2/production?date={today}&countryCode=SE"
             
             headers = {
@@ -61,7 +62,7 @@ async def fetch_energy_data():
                         energy_data["zones"]["SE3"]["wind"] = int(nat_wind * 0.30)
                         energy_data["zones"]["SE4"]["wind"] = int(nat_wind * 0.15)
                         
-                        print(f"[{datetime.now().strftime('%H:%M:%S')}] Grid data updated from real SVK API.")
+                        print(f"[{datetime.now(ZoneInfo('Europe/Stockholm')).strftime('%H:%M:%S')}] Grid data updated from real SVK API.")
                     else:
                         raise ValueError("Empty data received")
                 else:
@@ -69,7 +70,7 @@ async def fetch_energy_data():
                     
         except Exception as e:
             # Fallback mechanism: if API fails, apply smooth realistic market fluctuations (-2% to +2%)
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] API notice ({e}), using live simulation fallback.")
+            print(f"[{datetime.now(ZoneInfo('Europe/Stockholm')).strftime('%H:%M:%S')}] API notice ({e}), using live simulation fallback.")
             for zone in energy_data["zones"]:
                 for source in energy_data["zones"][zone]:
                     val = energy_data["zones"][zone][source]
@@ -77,8 +78,8 @@ async def fetch_energy_data():
                         variation = random.uniform(-0.02, 0.02)
                         energy_data["zones"][zone][source] = int(val * (1 + variation))
 
-        energy_data["last_updated"] = datetime.now().isoformat()
-        await asyncio.sleep(60) # Refresh every minute
+        energy_data["last_updated"] = datetime.now(ZoneInfo("Europe/Stockholm")).isoformat()
+        await asyncio.sleep(180) # Refresh every 3 minutes
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

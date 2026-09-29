@@ -10,7 +10,8 @@ export default function App() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('http://localhost:8001/api/energy');
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8001/api/energy';
+        const response = await fetch(apiUrl);
         const result = await response.json();
         setData(result);
       } catch (error) {
@@ -25,12 +26,20 @@ export default function App() {
 
   if (!data) return <div style={{ padding: '20px', color: 'white' }}>Connecting to server...</div>;
 
-  // Chart configuration template
+  // English zone descriptions
+  const zoneDescriptions = {
+    'SE1': 'Luleå: Norrbotten and parts of Västerbotten counties',
+    'SE2': 'Sundsvall: Jämtland, Västernorrland, Gävleborg and northern Dalarna counties',
+    'SE3': 'Stockholm: Gotland, Stockholm, Södermanland, Uppsala, Värmland, Västmanland, Örebro, Östergötland and others',
+    'SE4': 'Malmö: Skåne, Blekinge and parts of Halland and southern Småland'
+  };
+
+  // Chart configuration template (dynamic enabling/disabling of the internal title)
   const createOptions = (title, showLegend = false) => ({
     responsive: true,
     plugins: {
       legend: { display: showLegend, labels: { color: '#cbd5e1' } },
-      title: { display: true, text: title, color: '#f8fafc', font: { size: 16 } },
+      title: { display: !!title, text: title || '', color: '#f8fafc', font: { size: 16 } },
     },
     scales: {
       y: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
@@ -65,8 +74,21 @@ export default function App() {
 
         {/* 4 Regional Zone Charts */}
         {['SE1', 'SE2', 'SE3', 'SE4'].map(zone => (
-          <div key={zone} style={{ background: '#1e293b', padding: '20px', borderRadius: '12px', border: '1px solid #334155' }}>
-            <Bar data={createData(data.zones[zone])} options={createOptions(`Zone ${zone}`)} />
+          <div key={zone} style={{ background: '#1e293b', padding: '20px', borderRadius: '12px', border: '1px solid #334155', display: 'flex', flexDirection: 'column' }}>
+            
+            {/* HTML Title and Description moved above the chart */}
+            <div style={{ textAlign: 'center', marginBottom: '15px' }}>
+              <h2 style={{ fontSize: '16px', margin: '0 0 5px 0', color: '#f8fafc' }}>Zone {zone}</h2>
+              <p style={{ fontSize: '15px', color: '#ffffff', margin: '0', lineHeight: '1.4' }}>
+                {zoneDescriptions[zone]}
+              </p>
+            </div>
+            
+            {/* The chart itself, empty string disables the internal Chart.js title */}
+            <div style={{ flexGrow: 1 }}>
+              <Bar data={createData(data.zones[zone])} options={createOptions('')} />
+            </div>
+
           </div>
         ))}
 
